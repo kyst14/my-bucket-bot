@@ -3,14 +3,22 @@
   "module": "index.ts",
   "type": "module",
   "private": true,
-  "scripts": {},
+  "scripts": {
+    "dev": "nodemon --exec tsx src/index.ts",
+    "start": "node dist/src/index.js",
+    "build": "tsc && tsc-alias"
+  },
   "dependencies": {
     "dotenv": "^18.0.9",
+    "fastify": "^5.12.7",
     "grammy": "^1.46.0",
     "zod": "^4.6.7"
   },
   "devDependencies": {
     "@types/node": "^26.6.6",
+    "nodemon": "^3.1.14",
+    "tsc": "^2.0.4",
+    "tsc-alias": "^1.9.9",
     "tsx": "^4.23.15",
     "typescript": "^7.0.2"
   }
