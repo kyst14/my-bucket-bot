@@ -1,6 +1,5 @@
-import { Bot } from "grammy";
+import { Bot, InputFile } from "grammy";
 import env from "@/utils/env.js";
-import type { UserFromGetMe } from "grammy/types";
 
 export const bot = new Bot(env.botToken, {
     client: {
@@ -8,12 +7,45 @@ export const bot = new Bot(env.botToken, {
     },
 });
 
+bot.command("start", async (ctx) => {
+    await ctx.reply(
+        `👋 Hello, I can help you to download any video across the internet! Just send me a link to the video and I will do the rest!`,
+    );
+});
+
+bot.on("message:text", async (ctx, next) => {
+    const hasLink =
+        ctx.entities("url").length > 0 || ctx.entities("text_link").length > 0;
+
+    if (!hasLink) return next();
+
+    const urls = [
+        ...ctx.entities("url").map((e) => e.text),
+        ...ctx.entities("text_link").map((e) => e.url || e.text),
+    ];
+
+    if (urls.length !== 1) {
+        await ctx.reply(
+            `I found multiple links in your message. Please send me only one link at a time.`,
+        );
+        return;
+    }
+
+    const url = urls[0]!;
+
+    await ctx.reply(`Processing your link: ${url}`);    
+});
+
+bot.on("message", async (ctx) => {
+    await ctx.reply(`I can only process messages that contain links. Please send me a link to a video and I will do the rest!`);    
+});
+
 export async function startBot() {
-    console.log("🚀 Starting bot...");
     await bot.init();
 
     // set webhook if enabled, otherwise start long polling
     const webhookEnabled = await setWebhook();
+    console.log(webhookEnabled);
     if (webhookEnabled) {
         console.log(`✅ Webhook enabled.`);
     } else {
@@ -26,22 +58,7 @@ export async function startBot() {
 
     const botInfo = await bot.api.getMe();
 
-    await onStart(botInfo, webhookEnabled);
-
-    return;
-}
-
-async function onStart(botInfo: UserFromGetMe, webhookEnabled?: boolean) {
-    console.log(`✅ Bot started as @${botInfo.username} \n`);
-
-    // show bot info
-    console.log(
-        `👤 Bot info:\n` +
-            ` - ID: ${botInfo.id}\n` +
-            ` - Username: ${botInfo.username}\n` +
-            ` - First name: ${botInfo.first_name}\n` +
-            ` - Webhook URL: ${webhookEnabled ? "✓ Enabled" : "✕ Disabled"}\n`,
-    );
+    return { botInfo, webhookEnabled };
 }
 
 async function setWebhook(): Promise<boolean> {
@@ -50,10 +67,12 @@ async function setWebhook(): Promise<boolean> {
     if (env.webhookEnabled) {
         const webhookUrl = new URL(`${env.baseUrl}/webhook/${env.botToken}`);
 
-        webhookEnabled = await bot.api.setWebhook(webhookUrl.toString(), {
+        await bot.api.setWebhook(webhookUrl.toString(), {
             secret_token: env.webhookSecret,
             drop_pending_updates: true,
         });
+
+        webhookEnabled = true;
     } else {
         await bot.api.deleteWebhook();
     }

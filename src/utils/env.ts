@@ -30,7 +30,7 @@ export const env = {
     baseUrl: optional("BASE_URL", "").replace(/\/$/, ""),
     webhookSecret: optional("WEBHOOK_SECRET", ""),
 
-    tgApiRoot: optional("TG_API_ROOT", "")
+    tgApiRoot: optional("TG_API_ROOT", "https://api.telegram.org"),
 } as const;
 
 if (env.webhookEnabled) {

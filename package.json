@@ -17,8 +17,7 @@
   "devDependencies": {
     "@types/node": "^26.6.6",
     "nodemon": "^3.1.14",
-    "tsc": "^2.0.4",
-    "tsc-alias": "^1.9.9",
+    "tsc-alias": "^1.9.10",
     "tsx": "^4.23.15",
     "typescript": "^7.0.2"
   }
