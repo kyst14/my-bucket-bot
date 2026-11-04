@@ -9,6 +9,7 @@ RUN bun install --frozen-lockfile
 
 COPY tsconfig.json ./
 COPY src ./src
+COPY locales ./locales
 
 # tsc + tsc-alias
 RUN bun run build
