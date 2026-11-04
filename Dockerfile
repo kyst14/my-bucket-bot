@@ -1,5 +1,5 @@
 # build
-FROM oven/bun:1.2-debian AS builder
+FROM oven/bun:latest AS builder
 
 WORKDIR /app
 
@@ -14,7 +14,7 @@ COPY src ./src
 RUN bun run build
 
 # ——— runtime ———
-FROM oven/bun:1.2-debian
+FROM oven/bun:latest
 
 RUN apt-get update && apt-get install -y --no-install-recommends \
     ffmpeg \
