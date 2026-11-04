@@ -3,7 +3,7 @@ FROM oven/bun:1.2-debian AS builder
 
 WORKDIR /app
 
-COPY package.json bun.lockb* package-lock.json* ./
+COPY package.json bun.lock* package-lock.json* ./
 
 RUN bun install --frozen-lockfile
 
@@ -30,7 +30,7 @@ WORKDIR /app
 ENV NODE_ENV=production
 ENV DOWNLOADS_DIR=/tmp/downloads
 
-COPY package.json bun.lockb* ./
+COPY package.json bun.lock* ./
 RUN bun install --frozen-lockfile --production
 
 COPY --from=builder /app/dist ./dist

@@ -1,5 +1,5 @@
 import { Bot, InputFile } from "grammy";
-import env from "@/utils/env.js";
+import env from "@/config/env.js";
 
 export const bot = new Bot(env.botToken, {
     client: {

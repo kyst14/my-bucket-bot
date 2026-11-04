@@ -31,6 +31,15 @@ export const env = {
     webhookSecret: optional("WEBHOOK_SECRET", ""),
 
     tgApiRoot: optional("TG_API_ROOT", "https://api.telegram.org"),
+
+    // yt-dlp config
+    downloadDir: optional("DOWNLOADS_DIR", "./tmp/downloads"),
+    ytDlpBin: optional("YTDLP_BIN", "yt-dlp"),
+    ytDlpJsRuntime: optional("YTDLP_JS_RUNTIME", "node"),
+    maxFileSizeBytes:
+        Math.floor(Number(optional("MAX_FILE_SIZE_BYTES", "50"))) * 1024 * 1024, // 50 MB
+    fileTtlMs: Number(optional("FILE_TTL_MS", "600000")), // 10 minutes
+    cleanupIntervalMs: Number(optional("CLEANUP_INTERVAL_MS", "300000")), // 5 minutes
 } as const;
 
 if (env.webhookEnabled) {

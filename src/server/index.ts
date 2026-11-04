@@ -1,5 +1,5 @@
 import { bot } from "@/bot/index.js";
-import env from "@/utils/env.js";
+import env from "@/config/env.js";
 import Fastify from "fastify";
 import { webhookCallback } from "grammy";
 
