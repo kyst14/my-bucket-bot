@@ -1,13 +1,17 @@
 import { startBot } from "./bot/index.js";
-import { startServer } from "./server/index.js";
 
 async function main() {
-    console.log("Starting server...");
-    startServer();
-    console.log("🚀 Server started!");
-
     console.log("Starting bot...");
     const { botInfo, webhookEnabled } = await startBot();
+
+    if (webhookEnabled) {
+        const { startServer } = await import("./server/index.js");
+        
+        console.log("Starting server...");
+        startServer();
+        console.log("🚀 Server started!");
+    }
+
     console.log("🚀 Bot started!");
 
     console.log(

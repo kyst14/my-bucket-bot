@@ -1,16 +1,77 @@
-import { Bot, InputFile } from "grammy";
+import {
+    Bot,
+    Context,
+    InlineKeyboard,
+    InputFile,
+    session,
+    type SessionFlavor,
+} from "grammy";
 import env from "@/config/env.js";
+import { RedisAdapter } from "@grammyjs/storage-redis";
+import { Redis } from "ioredis";
+import { I18n, type I18nFlavor } from "@grammyjs/i18n";
 
-export const bot = new Bot(env.botToken, {
+interface SessionData {
+    __language_code?: string;
+}
+type MyContext = Context & I18nFlavor & SessionFlavor<SessionData>;
+
+export const bot = new Bot<MyContext>(env.botToken, {
     client: {
         apiRoot: env.tgApiRoot,
     },
 });
 
+const redisClient = new Redis(env.redisUrl, {
+    enableReadyCheck: false,
+});
+const storage = new RedisAdapter({ instance: redisClient });
+
+const i18n = new I18n<MyContext>({
+    defaultLocale: "en",
+    directory: "locales",
+    useSession: true,
+});
+
+bot.use(
+    session({
+        initial: (): SessionData => ({}),
+        storage,
+    }),
+);
+
+bot.use(i18n);
+
 bot.command("start", async (ctx) => {
-    await ctx.reply(
-        `👋 Hello, I can help you to download any video across the internet! Just send me a link to the video and I will do the rest!`,
-    );
+    const name = ctx.from?.first_name || ctx.from?.username || "user";
+    await ctx.reply(ctx.t("welcome", { name }), {
+        parse_mode: "Markdown",
+    });
+});
+
+bot.command("info", async (ctx) => {
+    await ctx.reply(ctx.t("info"), {
+        parse_mode: "Markdown",
+    });
+});
+
+bot.command("help", async (ctx) => {
+    await ctx.reply(ctx.t("help"), { parse_mode: "Markdown" });
+});
+
+bot.command("language", async (ctx) => {
+    const keyboard = new InlineKeyboard()
+        .text("🇷🇺 Русский", "set_lang_ru")
+        .text("🇬🇧 English", "set_lang_en");
+
+    await ctx.reply("Please select a language:", { reply_markup: keyboard });
+});
+
+bot.callbackQuery(/^set_lang_(ru|en)$/, async (ctx) => {
+    const lang = ctx.match[1]!;
+    await ctx.i18n.setLocale(lang);
+    await ctx.answerCallbackQuery();
+    await ctx.editMessageText(ctx.t("lang_changed"));
 });
 
 bot.on("message:text", async (ctx, next) => {
@@ -33,11 +94,13 @@ bot.on("message:text", async (ctx, next) => {
 
     const url = urls[0]!;
 
-    await ctx.reply(`Processing your link: ${url}`);    
+    await ctx.reply(`Processing your link: ${url}`);
 });
 
 bot.on("message", async (ctx) => {
-    await ctx.reply(`I can only process messages that contain links. Please send me a link to a video and I will do the rest!`);    
+    await ctx.reply(
+        `I can only process messages that contain links. Please send me a link to a video and I will do the rest!`,
+    );
 });
 
 export async function startBot() {
@@ -45,7 +108,6 @@ export async function startBot() {
 
     // set webhook if enabled, otherwise start long polling
     const webhookEnabled = await setWebhook();
-    console.log(webhookEnabled);
     if (webhookEnabled) {
         console.log(`✅ Webhook enabled.`);
     } else {
@@ -53,7 +115,7 @@ export async function startBot() {
             "Bot is running in long polling mode. Webhook is disabled.",
         );
 
-        await bot.start();
+        bot.start();
     }
 
     const botInfo = await bot.api.getMe();

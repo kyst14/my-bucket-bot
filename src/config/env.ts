@@ -31,6 +31,7 @@ export const env = {
     webhookSecret: optional("WEBHOOK_SECRET", ""),
 
     tgApiRoot: optional("TG_API_ROOT", "https://api.telegram.org"),
+    redisUrl: optional("REDIS_URL", "redis://localhost:6379"),
 
     // yt-dlp config
     downloadDir: optional("DOWNLOADS_DIR", "./tmp/downloads"),

@@ -4,7 +4,7 @@ import Fastify from "fastify";
 import { webhookCallback } from "grammy";
 
 const app = Fastify({
-    logger: !env.isProd,
+    logger: env.isProd,
 });
 
 // Webhook endpoint
