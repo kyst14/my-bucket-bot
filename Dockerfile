@@ -1,20 +1,18 @@
-# build
+# ========== BUILD ==========
 FROM oven/bun:latest AS builder
 
 WORKDIR /app
 
 COPY package.json bun.lock* package-lock.json* ./
-
 RUN bun install --frozen-lockfile
 
 COPY tsconfig.json ./
 COPY src ./src
 COPY locales ./locales
 
-# tsc + tsc-alias
 RUN bun run build
 
-# ——— runtime ———
+# ========== RUNTIME ==========
 FROM oven/bun:latest
 
 RUN apt-get update && apt-get install -y --no-install-recommends \
@@ -23,13 +21,16 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     python3-pip \
     ca-certificates \
     curl \
-  && pip3 install --break-system-packages --no-cache-dir yt-dlp \
+    nodejs \
+  && pip3 install --break-system-packages --no-cache-dir -U yt-dlp \
+  && yt-dlp --version \
   && rm -rf /var/lib/apt/lists/*
 
 WORKDIR /app
 
 ENV NODE_ENV=production
 ENV DOWNLOADS_DIR=/tmp/downloads
+ENV YTDLP_JS_RUNTIME=node
 
 COPY package.json bun.lock* ./
 RUN bun install --frozen-lockfile --production
