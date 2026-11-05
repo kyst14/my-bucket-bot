@@ -1,5 +1,6 @@
 import {
     Bot,
+    BotError,
     Context,
     InlineKeyboard,
     InputFile,
@@ -10,6 +11,8 @@ import env from "@/config/env.js";
 import { RedisAdapter } from "@grammyjs/storage-redis";
 import { Redis } from "ioredis";
 import { I18n, type I18nFlavor } from "@grammyjs/i18n";
+import { getVideoPreview } from "@/services/preview.js";
+import type { VideoPreview } from "@/config/types.js";
 
 interface SessionData {
     __language_code?: string;
@@ -20,6 +23,14 @@ export const bot = new Bot<MyContext>(env.botToken, {
     client: {
         apiRoot: env.tgApiRoot,
     },
+});
+
+bot.catch((err: BotError) => {
+    const ctx = err.ctx;
+    console.error(
+        `Error while handling update ${ctx.update.update_id}:`,
+        err.error,
+    );
 });
 
 const redisClient = new Redis(env.redisUrl, {
@@ -92,9 +103,86 @@ bot.on("message:text", async (ctx, next) => {
         return;
     }
 
-    const url = urls[0]!;
+    const processingMessage = await ctx.reply(ctx.t("processing_video"));
 
-    await ctx.reply(`Processing your link: ${url}`);
+    const url = urls[0]!;
+    let preview: VideoPreview | null = null;
+
+    try {
+        preview = await getVideoPreview(url);
+    } catch (error) {
+        console.error("Error processing video preview:", error);
+        await ctx.reply(
+            "Error generating video preview: " +
+                (error instanceof Error ? error.message : String(error)),
+        );
+    }
+
+    if (!preview) {
+        await ctx.reply(
+            `I couldn't generate a preview for the provided link. Please make sure it's a valid video link.`,
+        );
+        return;
+    } else {
+        const {
+            uploader: author,
+            durationText,
+            title,
+            thumbnailUrl,
+            qualities,
+        } = preview;
+
+        const caption = ctx.t("video_preview", {
+            title,
+            author: author || 'Unknown',
+            durationText: durationText || 'Unknown',
+        });
+
+        const keyboard = new InlineKeyboard();
+
+        const allowedQualities = qualities.filter((q) =>
+            env.allowedQualities.includes(q.label),
+        );
+
+        allowedQualities.forEach((quality, index) => {
+            keyboard.text(
+                `${quality.label} (${quality.sizeText})`,
+                `download_${quality.label}`,
+            );
+
+            if ((index + 1) % 2 === 0) {
+                keyboard.row();
+            }
+        });
+
+        keyboard.row().text(ctx.t("download_audio"), "download_audio");
+
+        if (thumbnailUrl) {
+            await ctx.replyWithPhoto(
+                (() => {
+                    if (
+                        thumbnailUrl.startsWith("http://") ||
+                        thumbnailUrl.startsWith("https://")
+                    ) {
+                        return thumbnailUrl;
+                    }
+                    return new InputFile(thumbnailUrl);
+                })(),
+                {
+                    caption,
+                    parse_mode: "Markdown",
+                    reply_markup: keyboard,
+                },
+            );
+        } else {
+            await ctx.reply(caption, {
+                parse_mode: "Markdown",
+                reply_markup: keyboard,
+            });
+        }
+
+        await ctx.api.deleteMessage(ctx.chat.id, processingMessage.message_id);
+    }
 });
 
 bot.on("message", async (ctx) => {

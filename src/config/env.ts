@@ -41,6 +41,9 @@ export const env = {
         Math.floor(Number(optional("MAX_FILE_SIZE_BYTES", "50"))) * 1024 * 1024, // 50 MB
     fileTtlMs: Number(optional("FILE_TTL_MS", "600000")), // 10 minutes
     cleanupIntervalMs: Number(optional("CLEANUP_INTERVAL_MS", "300000")), // 5 minutes
+    allowedQualities: optional("ALLOWED_QUALITY", "360p,480p,720p,1080p")
+        .split(",")
+        .map((q) => q.trim()),
 } as const;
 
 if (env.webhookEnabled) {

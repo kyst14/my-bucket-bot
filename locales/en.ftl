@@ -1,7 +1,7 @@
 welcome = 👋 Hello, {$name}! I am **My Bucket Bot**.
 
     Send me a link to a video, and I will download it for you. I work with YouTube, TikTok, and many other sites.
-    
+
     Use /help to see available commands or /info to get project details.
 
 info = 🤖 **About My Bucket Bot**
@@ -23,3 +23,14 @@ help = 📋 **Available commands:**
     /language — Change language / Изменить язык
 
 lang_changed = Language successfully set to English!
+
+processing_video = ⏳ Processing your video. Please wait...
+
+video_preview = *{$title}*
+
+    Author: {$author}
+    Duration: {$durationText}
+    
+    Select the quality you want to download:
+
+download_audio = 🎵 Download only audio (mp3)

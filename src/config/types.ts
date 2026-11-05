@@ -2,8 +2,11 @@ export interface VideoQuality {
     height: number;
     label: string;
     fps?: number | undefined;
-    // Video stream only, may be missing
+    // Estimated final file size (video + audio), missing if unknown
     approxSizeBytes?: number | undefined;
+    approxSizeMb?: number | undefined;
+    // Ready for UI, e.g. "~12.5 МБ"
+    sizeText?: string | undefined;
 }
 
 export interface VideoPreview {
