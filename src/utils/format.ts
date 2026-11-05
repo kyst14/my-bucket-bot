@@ -12,6 +12,6 @@ const MB = 1024 * 1024;
 export function formatSizeMb(bytes: number): string {
     const mb = Math.max(Math.round((bytes / MB) * 10) / 10, 0.1);
     return mb >= 1024
-        ? `~${(mb / 1024).toFixed(1)} ГБ`
-        : `~${mb.toFixed(1)} МБ`;
+        ? `~${(mb / 1024).toFixed(1)} GB`
+        : `~${mb.toFixed(1)} MB`;
 }

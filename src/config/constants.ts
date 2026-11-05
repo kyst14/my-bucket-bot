@@ -1,4 +1,4 @@
-import { I18n } from "@grammyjs/i18n";
+import { I18n, type TranslationVariables } from "@grammyjs/i18n";
 import type { MyContext } from "./types.js";
 
 export const i18n = new I18n<MyContext>({

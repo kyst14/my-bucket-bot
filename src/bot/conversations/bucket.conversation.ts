@@ -100,7 +100,7 @@ export async function downloadConversation(
     const quality = clickCtx.match[1]!;
 
     if (quality === "audio") {
-        await clickCtx.reply(
+        return await clickCtx.reply(
             "Audio download is not implemented yet. Stay tuned!",
         );
     }
