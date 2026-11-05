@@ -8,6 +8,9 @@ import type {
 import { downloadVideo } from "@/services/download.js";
 import { getVideoPreview } from "@/services/preview.js";
 import { InlineKeyboard, InputFile } from "grammy";
+import { getVideoMeta } from "@/utils/videoMeta.js";
+import { removeDownload } from "@/utils/tempStorage.js";
+import type { Message } from "grammy/types";
 
 export async function downloadConversation(
     conversation: MyConversation,
@@ -17,7 +20,6 @@ export async function downloadConversation(
     const processingMessage = await ctx.reply(ctx.t("processing_video"));
 
     let preview: VideoPreview | null = null;
-
     try {
         preview = await getVideoPreview(url);
     } catch (error) {
@@ -31,10 +33,11 @@ export async function downloadConversation(
 
     if (!preview) {
         await ctx.reply(
-            `"⛔️ I couldn't generate a preview for the provided link. Please make sure it's a valid video link.`,
+            `⛔️ I couldn't generate a preview for the provided link. Please make sure it's a valid video link.`,
         );
         return;
     }
+
     const {
         uploader: author,
         durationText,
@@ -50,7 +53,6 @@ export async function downloadConversation(
     });
 
     const keyboard = new InlineKeyboard();
-
     const allowedQualities = qualities.filter((q) =>
         env.allowedQualities.includes(q.label),
     );
@@ -60,7 +62,6 @@ export async function downloadConversation(
             `${quality.label} (${quality.sizeText})`,
             `download_${quality.label}`,
         );
-
         if ((index + 1) % 2 === 0) {
             keyboard.row();
         }
@@ -68,8 +69,10 @@ export async function downloadConversation(
 
     keyboard.row().text(ctx.t("download_audio"), "download_audio");
 
+    let qulityMsg: Message.TextMessage | Message.PhotoMessage;
+
     if (thumbnailUrl) {
-        await ctx.replyWithPhoto(
+        qulityMsg = await ctx.replyWithPhoto(
             (() => {
                 if (
                     thumbnailUrl.startsWith("http://") ||
@@ -86,7 +89,7 @@ export async function downloadConversation(
             },
         );
     } else {
-        await ctx.reply(caption, {
+        qulityMsg = await ctx.reply(caption, {
             parse_mode: "Markdown",
             reply_markup: keyboard,
         });
@@ -97,12 +100,15 @@ export async function downloadConversation(
     const clickCtx = await conversation.waitForCallbackQuery(/download_(\w+)/);
     await clickCtx.answerCallbackQuery();
 
+    await ctx.api.deleteMessage(ctx.chat!.id!, qulityMsg.message_id);
+
     const quality = clickCtx.match[1]!;
 
     if (quality === "audio") {
-        return await clickCtx.reply(
+        await clickCtx.reply(
             "Audio download is not implemented yet. Stay tuned!",
         );
+        return;
     }
 
     const progressMessage = await clickCtx.reply(
@@ -110,21 +116,18 @@ export async function downloadConversation(
     );
 
     let downloadedVideo: DownloadResult | null = null;
-
     try {
-        downloadedVideo = await conversation.external(async (externalCtx) => {
+        downloadedVideo = await conversation.external(async () => {
             return await downloadVideo(url, {
                 quality: Number(quality.replace("p", "")),
             });
         });
     } catch (error) {
         console.error("Error downloading video:", error);
-
         await clickCtx.api.deleteMessage(
             clickCtx.chat!.id!,
             progressMessage.message_id,
         );
-
         await clickCtx.reply(
             "⛔️ Error downloading video: " +
                 (error instanceof Error ? error.message : String(error)),
@@ -137,26 +140,64 @@ export async function downloadConversation(
             clickCtx.chat!.id!,
             progressMessage.message_id,
         );
-
         await clickCtx.reply("⛔️ Download failed. Please try again later.");
         return;
     }
 
-    await clickCtx.api.editMessageText(
-        clickCtx.chat!.id!,
-        progressMessage.message_id,
-        ctx.t("uploading"),
-    );
+    let meta: { width: number; height: number; duration: number } | null = null;
+    try {
+        meta = await getVideoMeta(downloadedVideo.filePath);
+    } catch (err) {
+        console.warn(
+            "Could not read video meta, sending without dimensions:",
+            err,
+        );
+    }
 
     try {
-        await clickCtx.replyWithVideo(new InputFile(downloadedVideo.filePath), {
+        await clickCtx.api.editMessageText(
+            clickCtx.chat!.id!,
+            progressMessage.message_id,
+            "📤 Uploading your video. Please wait...",
+        );
+    } catch {}
+
+    try {
+        const videoOptions: Parameters<typeof clickCtx.replyWithVideo>[1] = {
             caption: preview.title,
-        });
+            supports_streaming: true,
+        };
+
+        if (meta) {
+            videoOptions.width = meta.width;
+            videoOptions.height = meta.height;
+            videoOptions.duration = meta.duration;
+        }
+
+        await clickCtx.replyWithVideo(
+            new InputFile(downloadedVideo.filePath),
+            videoOptions,
+        );
     } catch (error) {
         console.error("Error sending video:", error);
         await clickCtx.reply(
             "⛔️ Error sending video: " +
                 (error instanceof Error ? error.message : String(error)),
         );
+    } finally {
+        try {
+            await removeDownload(downloadedVideo.filePath);
+        } catch {
+            // ignore
+        }
+
+        try {
+            await clickCtx.api.deleteMessage(
+                clickCtx.chat!.id!,
+                progressMessage.message_id,
+            );
+        } catch {
+            // ignore
+        }
     }
 }
