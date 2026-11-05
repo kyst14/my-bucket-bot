@@ -1,3 +1,7 @@
+import type { Conversation, ConversationFlavor } from "@grammyjs/conversations";
+import type { I18nFlavor } from "@grammyjs/i18n";
+import type { Context, SessionFlavor } from "grammy";
+
 export interface VideoQuality {
     height: number;
     label: string;
@@ -53,3 +57,14 @@ export interface DownloadResult {
     sizeBytes: number;
     audioOnly: boolean;
 }
+
+export interface SessionData {
+    __language_code?: string;
+}
+
+export type MyContext = Context &
+    I18nFlavor &
+    SessionFlavor<SessionData> &
+    ConversationFlavor<Context>;
+
+export type MyConversation = Conversation<MyContext, MyContext>;

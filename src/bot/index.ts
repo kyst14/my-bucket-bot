@@ -12,12 +12,14 @@ import { RedisAdapter } from "@grammyjs/storage-redis";
 import { Redis } from "ioredis";
 import { I18n, type I18nFlavor } from "@grammyjs/i18n";
 import { getVideoPreview } from "@/services/preview.js";
-import type { VideoPreview } from "@/config/types.js";
-
-interface SessionData {
-    __language_code?: string;
-}
-type MyContext = Context & I18nFlavor & SessionFlavor<SessionData>;
+import type { MyContext, SessionData, VideoPreview } from "@/config/types.js";
+import {
+    conversations,
+    createConversation,
+    type ConversationFlavor,
+} from "@grammyjs/conversations";
+import { downloadConversation } from "./conversations/bucket.conversation.js";
+import { i18n } from "@/config/constants.js";
 
 export const bot = new Bot<MyContext>(env.botToken, {
     client: {
@@ -38,12 +40,6 @@ const redisClient = new Redis(env.redisUrl, {
 });
 const storage = new RedisAdapter({ instance: redisClient });
 
-const i18n = new I18n<MyContext>({
-    defaultLocale: "en",
-    directory: "locales",
-    useSession: true,
-});
-
 bot.use(
     session({
         initial: (): SessionData => ({}),
@@ -52,6 +48,10 @@ bot.use(
 );
 
 bot.use(i18n);
+bot.use(conversations());
+bot.use(
+    createConversation(downloadConversation, { plugins: [i18n.middleware()] }),
+);
 
 bot.command("start", async (ctx) => {
     const name = ctx.from?.first_name || ctx.from?.username || "user";
@@ -103,86 +103,11 @@ bot.on("message:text", async (ctx, next) => {
         return;
     }
 
-    const processingMessage = await ctx.reply(ctx.t("processing_video"));
-
     const url = urls[0]!;
-    let preview: VideoPreview | null = null;
 
-    try {
-        preview = await getVideoPreview(url);
-    } catch (error) {
-        console.error("Error processing video preview:", error);
-        await ctx.reply(
-            "Error generating video preview: " +
-                (error instanceof Error ? error.message : String(error)),
-        );
-    }
+    await ctx.conversation.enter("downloadConversation", url);
 
-    if (!preview) {
-        await ctx.reply(
-            `I couldn't generate a preview for the provided link. Please make sure it's a valid video link.`,
-        );
-        return;
-    } else {
-        const {
-            uploader: author,
-            durationText,
-            title,
-            thumbnailUrl,
-            qualities,
-        } = preview;
-
-        const caption = ctx.t("video_preview", {
-            title,
-            author: author || 'Unknown',
-            durationText: durationText || 'Unknown',
-        });
-
-        const keyboard = new InlineKeyboard();
-
-        const allowedQualities = qualities.filter((q) =>
-            env.allowedQualities.includes(q.label),
-        );
-
-        allowedQualities.forEach((quality, index) => {
-            keyboard.text(
-                `${quality.label} (${quality.sizeText})`,
-                `download_${quality.label}`,
-            );
-
-            if ((index + 1) % 2 === 0) {
-                keyboard.row();
-            }
-        });
-
-        keyboard.row().text(ctx.t("download_audio"), "download_audio");
-
-        if (thumbnailUrl) {
-            await ctx.replyWithPhoto(
-                (() => {
-                    if (
-                        thumbnailUrl.startsWith("http://") ||
-                        thumbnailUrl.startsWith("https://")
-                    ) {
-                        return thumbnailUrl;
-                    }
-                    return new InputFile(thumbnailUrl);
-                })(),
-                {
-                    caption,
-                    parse_mode: "Markdown",
-                    reply_markup: keyboard,
-                },
-            );
-        } else {
-            await ctx.reply(caption, {
-                parse_mode: "Markdown",
-                reply_markup: keyboard,
-            });
-        }
-
-        await ctx.api.deleteMessage(ctx.chat.id, processingMessage.message_id);
-    }
+    return;
 });
 
 bot.on("message", async (ctx) => {

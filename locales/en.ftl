@@ -30,7 +30,10 @@ video_preview = *{$title}*
 
     Author: {$author}
     Duration: {$durationText}
-    
+
     Select the quality you want to download:
 
 download_audio = 🎵 Download only audio (mp3)
+
+downloading = ⏬ Downloading your video. Please wait...
+    {$progressBar}

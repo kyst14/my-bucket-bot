@@ -5,6 +5,7 @@
     "": {
       "name": "my-bucket-bot",
       "dependencies": {
+        "@grammyjs/conversations": "^2.1.1",
         "@grammyjs/i18n": "^1.1.2",
         "@grammyjs/storage-redis": "^2.6.0",
         "dotenv": "^18.0.9",
@@ -97,6 +98,8 @@
     "@fluent/bundle": ["@fluent/bundle@0.17.1", "", {}, "sha512-CRFNT9QcSFAeFDneTF59eyv3JXFGhIIN4boUO2y22YmsuuKLyDk+N1I/NQUYz9Ab63e6V7T6vItoZIG/2oOOuw=="],
 
     "@fluent/langneg": ["@fluent/langneg@0.6.2", "", {}, "sha512-YF4gZ4sLYRQfctpUR2uhb5UyPUYY5n/bi3OaED/Q4awKjPjlaF8tInO3uja7pnLQcmLTURkZL7L9zxv2Z5NDwg=="],
+
+    "@grammyjs/conversations": ["@grammyjs/conversations@2.1.1", "", { "peerDependencies": { "grammy": "^1.20.1" } }, "sha512-hoxqwSkaXDeU7mzXulpk3A4Cmd6UZO3HU4aPoITX5ekSHK7ZcUEmMl7RhKKkqw3z6zVbbAShQreJoVV5/dDSLA=="],
 
     "@grammyjs/i18n": ["@grammyjs/i18n@1.1.2", "", { "dependencies": { "@deno/shim-deno": "~0.18.0", "@fluent/bundle": "^0.17.1", "@fluent/langneg": "^0.6.2" }, "peerDependencies": { "grammy": "^1.10.0" } }, "sha512-PcK06mxuDDZjxdZ5HywBhr+erEITsR816KP4DNIDDds1jpA45pfz/nS9FdZmzF8H6lMyPix3mV5WL1rT4q+BuA=="],
 
