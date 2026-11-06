@@ -22,8 +22,13 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     ca-certificates \
     curl \
     nodejs \
-  && pip3 install --break-system-packages --no-cache-dir -U yt-dlp \
+  && python3 -m pip install \
+    --break-system-packages \
+    --no-cache-dir \
+    --pre \
+    -U "yt-dlp[default]" \
   && yt-dlp --version \
+  && node --version \
   && rm -rf /var/lib/apt/lists/*
 
 WORKDIR /app
