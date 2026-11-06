@@ -52,6 +52,8 @@ export function buildDownloadArgs({
         "--quiet",
         "--progress",
         "--no-simulate",
+        "--extractor-args",
+        "youtube:player_client=android,tv,web_embedded",
         "--retries",
         "3",
         "--windows-filenames",
