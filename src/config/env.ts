@@ -1,4 +1,5 @@
 import "dotenv/config";
+import { existsSync } from "node:fs";
 
 function required(name: string): string {
     const value = process.env[name];
@@ -54,6 +55,15 @@ if (env.webhookEnabled) {
         throw new Error("WEBHOOK_SECRET is required when WEBHOOK_ENABLED=true");
     if (env.webhookSecret.length < 32) {
         throw new Error("WEBHOOK_SECRET must be at least 32 characters");
+    }
+}
+
+if (env.cookiesPath) {
+    const cookiesPathExists = existsSync(env.cookiesPath)
+    if (!cookiesPathExists) {
+        throw new Error("COOKIES_PATH does not point to an existing file");
+    } else if (!env.cookiesPath.endsWith(".txt")) {
+        throw new Error("COOKIES_PATH must point to a .txt file");
     }
 }
 

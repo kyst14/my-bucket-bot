@@ -36,7 +36,7 @@ export function buildBaseArgs(): string[] {
         args.push("--cookies", cookiesPath);
     }
 
-    args.push("--extractor-args", "youtube:player_client=android,tv,web_embedded");
+    args.push("--extractor-args", "youtube:player_client=web,default");
 
     return args;
 }
