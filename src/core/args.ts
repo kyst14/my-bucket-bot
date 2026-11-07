@@ -8,6 +8,8 @@ import {
 } from "./progress.js";
 
 const AD_SEGMENT_CATEGORIES = ["sponsor", "selfpromo"];
+const cookiesPath = env.cookiesPath;
+const runtime = env.ytDlpJsRuntime
 
 // Prefers mp4/m4a for broad player compatibility, falls back to anything
 export function buildFormatSelector(quality: "best" | number): string {
@@ -24,12 +26,19 @@ export function buildFormatSelector(quality: "best" | number): string {
 
 // Flags shared by every yt-dlp call
 export function buildBaseArgs(): string[] {
-    const runtime = env.ytDlpJsRuntime;
-    return [
-        "--no-playlist",
-        "--no-warnings",
-        ...(runtime ? ["--js-runtimes", runtime] : []),
-    ];
+    const args = ["--no-playlist", "--no-warnings"];
+
+    if (runtime) {
+        args.push("--js-runtimes", runtime);
+    }
+
+    if (cookiesPath) {
+        args.push("--cookies", cookiesPath);
+    }
+
+    args.push("--extractor-args", "youtube:player_client=android,tv,web_embedded");
+
+    return args;
 }
 
 export interface DownloadArgsInput {
@@ -45,7 +54,6 @@ export function buildDownloadArgs({
     options,
     maxFileSizeBytes,
 }: DownloadArgsInput): string[] {
-    const cookiesPath = env.cookiesPath;
     const args = [
         ...buildBaseArgs(),
         "--no-colors",
@@ -53,9 +61,6 @@ export function buildDownloadArgs({
         "--quiet",
         "--progress",
         "--no-simulate",
-        "--extractor-args",
-        "youtube:player_client=android,tv,web_embedded",
-        ...(cookiesPath ? ["--cookies", cookiesPath] : []),
         "--retries",
         "3",
         "--windows-filenames",
