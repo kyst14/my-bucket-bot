@@ -174,6 +174,17 @@ export async function downloadConversation(
             videoOptions.duration = meta.duration;
         }
 
+        if (thumbnailUrl) {
+            if (
+                thumbnailUrl.startsWith("http://") ||
+                thumbnailUrl.startsWith("https://")
+            ) {
+                videoOptions.thumbnail = new InputFile({ url: thumbnailUrl });
+            } else {
+                videoOptions.thumbnail = new InputFile(thumbnailUrl);
+            }
+        }
+
         await clickCtx.replyWithVideo(
             new InputFile(downloadedVideo.filePath),
             videoOptions,

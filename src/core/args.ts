@@ -45,6 +45,7 @@ export function buildDownloadArgs({
     options,
     maxFileSizeBytes,
 }: DownloadArgsInput): string[] {
+    const cookiesPath = env.cookiesPath;
     const args = [
         ...buildBaseArgs(),
         "--no-colors",
@@ -54,6 +55,7 @@ export function buildDownloadArgs({
         "--no-simulate",
         "--extractor-args",
         "youtube:player_client=android,tv,web_embedded",
+        ...(cookiesPath ? ["--cookies", cookiesPath] : []),
         "--retries",
         "3",
         "--windows-filenames",

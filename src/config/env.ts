@@ -44,6 +44,7 @@ export const env = {
     allowedQualities: optional("ALLOWED_QUALITY", "360p,480p,720p,1080p")
         .split(",")
         .map((q) => q.trim()),
+    cookiesPath: optional("COOKIES_PATH", "")
 } as const;
 
 if (env.webhookEnabled) {
