@@ -35,15 +35,18 @@ bot.catch((err: BotError) => {
     );
 });
 
-const redisClient = new Redis(env.redisUrl, {
-    enableReadyCheck: false,
-});
-const storage = new RedisAdapter({ instance: redisClient });
+// const redisClient = new Redis(process.env.REDIS_URL!, {
+//     connectTimeout: 10000,
+//     retryStrategy(times) {
+//         return Math.min(times * 500, 5000);
+//     },
+// });
+// const storage = new RedisAdapter({ instance: redisClient });
 
 bot.use(
     session({
         initial: (): SessionData => ({}),
-        storage,
+        // storage,
     }),
 );
 

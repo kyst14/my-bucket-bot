@@ -6,9 +6,10 @@ import {
     POSTPROCESS_PREFIX,
     PROGRESS_PREFIX,
 } from "./progress.js";
+import { resolve } from "node:path";
 
 const AD_SEGMENT_CATEGORIES = ["sponsor", "selfpromo"];
-const cookiesPath = env.cookiesPath;
+const cookiesPath = env.cookiesPath ? resolve(env.tmpDir, "yt-dlp-cookies.txt") : undefined;
 const runtime = env.ytDlpJsRuntime
 
 // Prefers mp4/m4a for broad player compatibility, falls back to anything

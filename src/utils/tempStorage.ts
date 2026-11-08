@@ -8,7 +8,7 @@ const activeJobs = new Set<string>();
 let timer: NodeJS.Timeout | undefined;
 
 export async function createJobDir(): Promise<string> {
-    const downloadDir = env.downloadDir;
+    const downloadDir = env.tmpDir + "/downloads";
     await mkdir(downloadDir, { recursive: true });
     const dir = resolve(await mkdtemp(join(downloadDir, JOB_PREFIX)));
     activeJobs.add(dir);
@@ -28,14 +28,15 @@ export async function discardJob(dir: string): Promise<void> {
 // Deletes the job folder that contains the given downloaded file
 export async function removeDownload(filePath: string): Promise<void> {
     const jobDir = resolve(dirname(filePath));
-    const root = resolve(env.downloadDir);
+    const root = resolve(env.tmpDir + "/downloads");
     if (dirname(jobDir) === root && basename(jobDir).startsWith(JOB_PREFIX)) {
         await discardJob(jobDir);
     }
 }
 
 export async function cleanupOldJobs(): Promise<number> {
-    const { downloadDir, fileTtlMs } = env;
+    const { tmpDir, fileTtlMs } = env;
+    const downloadDir = resolve(tmpDir + "/downloads");
     let entries: string[];
     try {
         entries = await readdir(downloadDir);

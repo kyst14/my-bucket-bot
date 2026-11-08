@@ -1,5 +1,6 @@
 import "dotenv/config";
-import { existsSync } from "node:fs";
+import { copyFileSync, existsSync } from "node:fs";
+import { resolve } from "node:path";
 
 function required(name: string): string {
     const value = process.env[name];
@@ -35,7 +36,7 @@ export const env = {
     redisUrl: optional("REDIS_URL", "redis://localhost:6379"),
 
     // yt-dlp config
-    downloadDir: optional("DOWNLOADS_DIR", "./tmp/downloads"),
+    tmpDir: optional("TMP_DIR", "/tmp"),
     ytDlpBin: optional("YTDLP_BIN", "yt-dlp"),
     ytDlpJsRuntime: optional("YTDLP_JS_RUNTIME", "node"),
     maxFileSizeBytes:
@@ -45,7 +46,7 @@ export const env = {
     allowedQualities: optional("ALLOWED_QUALITY", "360p,480p,720p,1080p")
         .split(",")
         .map((q) => q.trim()),
-    cookiesPath: optional("COOKIES_PATH", "")
+    cookiesPath: optional("COOKIES_PATH", ""),
 } as const;
 
 if (env.webhookEnabled) {
@@ -59,12 +60,16 @@ if (env.webhookEnabled) {
 }
 
 if (env.cookiesPath) {
-    const cookiesPathExists = existsSync(env.cookiesPath)
+    const cookiesPathExists = existsSync(env.cookiesPath);
+
     if (!cookiesPathExists) {
         throw new Error("COOKIES_PATH does not point to an existing file");
     } else if (!env.cookiesPath.endsWith(".txt")) {
         throw new Error("COOKIES_PATH must point to a .txt file");
     }
+
+    const target = resolve(env.tmpDir, "yt-dlp-cookies.txt");
+    copyFileSync(env.cookiesPath, target);
 }
 
 export default env;

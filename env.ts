@@ -34,7 +34,7 @@ export const env = {
     redisUrl: optional("REDIS_URL", "redis://localhost:6379"),
 
     // yt-dlp config
-    downloadDir: optional("DOWNLOADS_DIR", "./tmp/downloads"),
+    tmpDir + "/downloads": optional("DOWNLOADS_DIR", "./tmp/downloads"),
     ytDlpBin: optional("YTDLP_BIN", "yt-dlp"),
     ytDlpJsRuntime: optional("YTDLP_JS_RUNTIME", "node"),
     maxFileSizeBytes:
